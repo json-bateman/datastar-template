@@ -1,0 +1,14 @@
+package web
+
+templ Home(text string) {
+	@Layout("Home", Version) {
+		@HomeBody(text)
+	}
+}
+
+templ HomeBody(text string) {
+	<main id="morphTarget" data-init="@get('/sse/aloha')">
+		<h1>Hypermedia Gang Rise Up</h1>
+		<div>{ text }</div>
+	</main>
+}

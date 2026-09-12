@@ -1,0 +1,46 @@
+package web
+
+templ Layout(title, version string) {
+	<!DOCTYPE html>
+	<html
+		data-signals="{theme: localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')}"
+		data-attr:data-bs-theme="$theme"
+		data-effect="localStorage.setItem('theme', $theme)"
+		data-on:keydown__window="hotkey(evt, 't') && ($theme = $theme === 'dark' ? 'light' : 'dark')"
+		data-syntax-theme="gruvbox"
+		lang="en"
+	>
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>{ title }</title>
+			<!-- Need this IIFE to  run before CSS loads, prevents theme flash since D* is deferred with type="module" -->
+			<script>
+                    (function() {
+                        const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                        document.documentElement.setAttribute('data-bs-theme', theme);
+                    })();
+                     // True when `key` was pressed bare: no modifiers &
+                     // not while typing in a form field. Shared by all data-on:keydown hotkeys.
+                     window.hotkey = (evt, key) =>
+                        evt.key === key &&
+                        !evt.ctrlKey && !evt.metaKey && !evt.altKey &&
+                        !evt.target.closest('input, textarea, select, [contenteditable]');
+               </script>
+			<link href={ StaticPath("images/rocket.png") } rel="icon" type="image/avif"/>
+			<link href={ StaticPath("css/fonts.css") } rel="stylesheet"/>
+			<link href={ StaticPath("css/bootstrap.min.css") } rel="stylesheet"/>
+			<link href={ StaticPath("css/app.css") } rel="stylesheet"/>
+			<link href={ StaticPath("css/microlighter-gruvbox.css") } rel="stylesheet"/>
+		</head>
+		<body>
+			{ children... }
+		</body>
+		<!-- Datastar Inspector-->
+		<script type="module" src={ StaticPath("js/datastar-inspector.js") }></script>
+		<!-- Datastar v1.0.3 -->
+		<script type="module" src={ StaticPath("js/datastar.js") }></script>
+		<!-- MicroLighter v2.2.0 (auto-runner: highlights pre > code[class^="language-"] on load) -->
+		<script type="module" src={ StaticPath("js/microlighter/microlighter.min.js") }></script>
+	</html>
+}
