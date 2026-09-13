@@ -9,18 +9,21 @@ import (
 	"net/http"
 	"os/exec"
 	"strings"
-	"time"
 
 	"datastar-template"
 
 	"github.com/benbjohnson/hashfs"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
-	"github.com/starfederation/datastar-go/datastar"
 )
 
 //go:embed static/*
 var StaticFS embed.FS
+
+// Embed the actual sse_print file so the code displayed is actually what's run
+//
+//go:embed sse_print.go
+var ssePrintMessageSource string
 
 var Version = "dev"
 
@@ -80,32 +83,6 @@ func setupRoutes() chi.Router {
 func home(w http.ResponseWriter, r *http.Request) {
 	if err := Home("").Render(r.Context(), w); err != nil {
 		slog.Debug("render error", "component", "NotFound", "err", err)
-	}
-}
-
-func ssePrintMessage(w http.ResponseWriter, r *http.Request) {
-	sse := datastar.NewSSE(w, r, datastar.WithCompression(datastar.WithBrotli()))
-
-	ticker := time.NewTicker(time.Millisecond * 300)
-	defer ticker.Stop()
-
-	s := "Aloha Travelers"
-	t := 0
-
-	for {
-		if err := sse.PatchElementTempl(Home(s[:t])); err != nil {
-			return
-		}
-
-		select {
-		case <-r.Context().Done():
-			return
-		case <-ticker.C:
-			if len(s) <= t {
-				return
-			}
-			t++
-		}
 	}
 }
 
