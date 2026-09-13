@@ -22,7 +22,7 @@ func LoadSettings() *Config {
 		slog.Warn(".env file not found, using system environment variables instead")
 	}
 
-	if err := envconfig.Process("weblet", &Env); err != nil {
+	if err := envconfig.Process("", &Env); err != nil {
 		slog.Error("Failed to load environment configuration", "error", err)
 		os.Exit(1)
 	}
