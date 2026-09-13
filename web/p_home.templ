@@ -1,52 +1,15 @@
 package web
 
-import (
-	"strconv"
-	"time"
-
-	"datastar-template/sql/sqlcgen"
-)
-
-templ Message(text string) {
-	<h3 id="morphTarget">{ text }</h3>
-}
-
-templ UserTable(users []sqlcgen.User) {
-	<table id="user-table" class="table">
-		<thead>
-			<tr>
-				<th>ID</th>
-				<th>Username</th>
-				<th>Created At</th>
-			</tr>
-		</thead>
-		<tbody>
-			for _, user := range users {
-				<tr>
-					<td>{ strconv.FormatInt(user.ID, 10) }</td>
-					<td>{ user.Username }</td>
-					<td>{ time.Unix(user.CreatedAt, 0).Format(time.DateTime) }</td>
-				</tr>
-			}
-		</tbody>
-	</table>
-}
-
-templ Home(users []sqlcgen.User, text string) {
+templ Home(text string) {
 	@Layout("Home", Version) {
-		<main data-init="@get('/sse/home')">
+		<main data-init="@get('/sse/print')">
 			<h1>Hypermedia Gang Rise Up</h1>
-			@Message(text)
-			<div class="d-flex">
-				<h5>User Table:</h5>&emsp;
-				<span class="text-sm">Run <code>go run ./cmd/seed</code> to reset and seed the db</span>
-			</div>
-			@UserTable(users)
-			<button type="button" class="btn btn-primary btn-sm mb-2" data-on:click="@post('/user')">Add User</button>
-			<div>
-				*Add User uses the CQRS pattern: clicking it POSTs to <code>/user</code>, which creates the user and publishes a
-				message on the NATS <code>"home"</code> subject. This page holds an open connection to <code>/sse/home</code>,
-				which subscribes to that subject and re-renders the table whenever a message arrives.
+			<h3>{ text }</h3>
+			<pre><code class="language-go">{ ssePrintMessageSource }</code></pre>
+			<div class="text-sm">*{ "<pre><code> " } blocks are styled with the microlighter library, and a custom bootstrap theme</div>
+			<div class="text-sm">
+				**This code fat morphs the whole page <strong>Home</strong>, check the network tab, brotli compression
+				is showing that even though we're sending the entire page down on each new character, it's hardly transferring anymore bytes
 			</div>
 		</main>
 	}
