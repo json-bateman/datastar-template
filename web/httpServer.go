@@ -52,7 +52,7 @@ func getVersion() string {
 // withDefaultCache sets a long-lived Cache-Control header before the wrapped
 // handler runs. hashfs's FileServer overwrites this with its own header for
 // content-hashed requests, so this only takes effect for plain-named static
-// assets that bypass hashing.
+// assets that ignore hashfs hashing.
 func withDefaultCache(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
