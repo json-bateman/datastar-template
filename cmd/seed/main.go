@@ -5,22 +5,12 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
-	"math/rand/v2"
 	"os"
 
 	dtemplate "datastar-template"
 	"datastar-template/sql"
 	"datastar-template/sql/sqlcgen"
 )
-
-var adjectives = []string{"swift", "quiet", "brave", "lucky", "clever", "gentle", "bright", "bold"}
-var nouns = []string{"otter", "falcon", "willow", "cedar", "comet", "harbor", "meadow", "raven"}
-
-func randomUsername() string {
-	adj := adjectives[rand.IntN(len(adjectives))]
-	noun := nouns[rand.IntN(len(nouns))]
-	return fmt.Sprintf("%s-%s-%d", adj, noun, rand.IntN(10000))
-}
 
 func main() {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, nil)))
@@ -56,7 +46,7 @@ func run(ctx context.Context) error {
 	q := sqlcgen.New(db)
 
 	for range 5 {
-		user, err := q.CreateUser(ctx, randomUsername())
+		user, err := q.CreateUser(ctx, dtemplate.GenerateName())
 		if err != nil {
 			return fmt.Errorf("create user: %w", err)
 		}

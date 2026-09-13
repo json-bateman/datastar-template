@@ -1,4 +1,4 @@
-package web
+package natsrv
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
-func startNats() (*nats.Conn, error) {
+func StartNats() (*nats.Conn, error) {
 	ns, err := server.NewServer(&server.Options{
 		Port: server.RANDOM_PORT,
 	})

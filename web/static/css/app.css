@@ -16,3 +16,18 @@ html[data-bs-theme="dark"] {
 #shortcuts-overlay.d-block {
     background: oklch(0% 0 0 / 0.5);
 }
+
+/* .toast-container sets pointer-events:none for Bootstrap's own .toast
+   component (which opts back in itself); our toasts are plain .alert divs,
+   so they need to opt in here instead or nothing inside is clickable. */
+#toast-host .alert {
+    pointer-events: auto;
+}
+
+#toast-host .btn-close {
+    cursor: pointer;
+    margin-left: 0.5rem;
+    /* .btn-close sizes itself in em (width/height/background all "1em"), so
+       shrinking font-size shrinks the whole button and its X glyph together. */
+    font-size: 0.65rem;
+}

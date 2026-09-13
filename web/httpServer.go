@@ -14,11 +14,13 @@ import (
 
 	"datastar-template"
 
+	"datastar-template/natsrv"
 	"datastar-template/sql/sqlcgen"
 
 	"github.com/benbjohnson/hashfs"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
+	"github.com/nats-io/nats.go"
 	"github.com/starfederation/datastar-go/datastar"
 )
 
@@ -60,7 +62,7 @@ func withDefaultCache(next http.Handler) http.Handler {
 	})
 }
 
-func setupRoutes(db *sql.DB) chi.Router {
+func setupRoutes(db *sql.DB, nc *nats.Conn) chi.Router {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
@@ -68,7 +70,8 @@ func setupRoutes(db *sql.DB) chi.Router {
 	r.Handle("/static/*", withDefaultCache(hashfs.FileServer(StaticSys)))
 
 	r.Get("/", home(db))
-	r.Get("/sse/print", ssePrintMessage(db))
+	r.Get("/sse/home", sseHome(db, nc))
+	r.Post("/user", addUser(db, nc))
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
@@ -95,36 +98,77 @@ func home(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func ssePrintMessage(db *sql.DB) http.HandlerFunc {
+func sseHome(db *sql.DB, nc *nats.Conn) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		sse := datastar.NewSSE(w, r, datastar.WithCompression(datastar.WithBrotli()))
 
-		users, err := sqlcgen.New(db).GetAllUsers(r.Context())
+		ch := make(chan *nats.Msg, 64)
+		sub, err := nc.ChanSubscribe("home", ch)
 		if err != nil {
-			slog.Error("query error", "component", "GetAllUsers", "err", err)
+			slog.Error("nats subscribe failed", "err", err)
 			return
 		}
+		defer sub.Unsubscribe()
 
 		ticker := time.NewTicker(time.Millisecond * 300)
 		defer ticker.Stop()
 
-		s := "Now with Nats and SQLite"
+		s := "Now with Nats and SQLite!"
 		t := 0
 
 		for {
-			if err := sse.PatchElementTempl(Home(users, s[:t])); err != nil {
-				return
-			}
-
 			select {
-			case <-r.Context().Done():
-				return
 			case <-ticker.C:
 				if len(s) <= t {
 					return
 				}
 				t++
+				if err := sse.PatchElementTempl(Message(s[:t])); err != nil {
+					return
+				}
+
+			case <-ch:
+				users, err := sqlcgen.New(db).GetAllUsers(r.Context())
+				if err != nil {
+					slog.Error("query error", "component", "GetAllUsers", "err", err)
+					return
+				}
+				if err := sse.PatchElementTempl(UserTable(users)); err != nil {
+					return
+				}
+			case <-r.Context().Done():
+				return
 			}
+		}
+	}
+}
+
+// toastError appends an error toast into #toast-host.
+func toastError(w http.ResponseWriter, r *http.Request, message string) {
+	sse := datastar.NewSSE(w, r)
+	id := fmt.Sprintf("toast-%d", time.Now().UnixNano())
+	if err := sse.PatchElementTempl(
+		Toast(id, message),
+		datastar.WithSelector("#toast-host"),
+		// Needs to be append mode because we don't want to destroy a toast
+		// That may already be present, this stacks them instead
+		datastar.WithMode(datastar.ElementPatchModeAppend),
+	); err != nil {
+		slog.Error("toast: patch failed", "err", err)
+	}
+}
+
+func addUser(db *sql.DB, nc *nats.Conn) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		_, err := sqlcgen.New(db).CreateUser(r.Context(), dtemplate.GenerateName())
+		if err != nil {
+			slog.Error("query error", "component", "CreateUser", "err", err)
+			toastError(w, r, "Could not add user")
+			return
+		}
+		// Publish to NATS, this is being listened for on the open SSE connection that's subscribed to "home"
+		if err := nc.Publish("home", nil); err != nil {
+			slog.Error("nats publish failed", "err", err)
 		}
 	}
 }
@@ -135,7 +179,13 @@ func RunBlocking(setupCtx context.Context, db *sql.DB) error {
 	if Version == "dev" {
 		Version = getVersion()
 	}
-	router := setupRoutes(db)
+	nc, err := natsrv.StartNats()
+	if err != nil {
+		return fmt.Errorf("start nats: %w", err)
+	}
+	defer nc.Close()
+
+	router := setupRoutes(db, nc)
 
 	addr := fmt.Sprintf(":%d", dtemplate.Env.Port)
 	srv := http.Server{
