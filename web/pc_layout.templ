@@ -35,7 +35,12 @@ templ Layout(title, version string) {
 		</head>
 		<body class="d-flex flex-column min-vh-100" data-signals="{shortcutsOpen: false}">
 			<datastar-inspector></datastar-inspector>
-			<header class="d-flex justify-content-end gap-2 p-2">
+			<header class="d-flex justify-content-between align-items-center gap-2 p-2">
+				<nav class="d-flex gap-3">
+					<a href="/" class="link-body-emphasis">Home</a>
+					<a href="/nats-sqlite" class="link-body-emphasis">NATS + SQLite</a>
+				</nav>
+				<div class="d-flex gap-2">
 				<button
 					type="button"
 					class="btn btn-outline-secondary btn-sm"
@@ -55,6 +60,7 @@ templ Layout(title, version string) {
 					title="Keyboard shortcuts (?)"
 					data-on:click="$shortcutsOpen = true"
 				>?</button>
+				</div>
 			</header>
 			@ShortcutsDialog()
 			<div id="toast-host" class="toast-container position-fixed top-0 end-0 p-3"></div>
