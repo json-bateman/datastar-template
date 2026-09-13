@@ -179,7 +179,7 @@ func RunBlocking(setupCtx context.Context, db *sql.DB) error {
 	if Version == "dev" {
 		Version = getVersion()
 	}
-	nc, err := natsrv.StartNats()
+	ns, nc, err := natsrv.StartNats()
 	if err != nil {
 		return fmt.Errorf("start nats: %w", err)
 	}
@@ -199,6 +199,8 @@ func RunBlocking(setupCtx context.Context, db *sql.DB) error {
 		if err := srv.Shutdown(context.Background()); err != nil {
 			log.Printf("Error shutting down server: %v", err)
 		}
+		ns.Shutdown()
+		ns.WaitForShutdown()
 	}()
 
 	log.Printf("Starting server on http://localhost%s", addr)

@@ -31,7 +31,7 @@ Generated `*_templ.go` files are build artifacts — don't edit them, don't comm
 ## Building for production
 
 ```sh
-task go:build   # generates templ files, builds ./release/web
+task go:build   # generates templ files, builds ./release/app
 ```
 
 ## Adding a page

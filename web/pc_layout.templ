@@ -34,6 +34,7 @@ templ Layout(title, version string) {
 			<link href={ StaticPath("css/microlighter-bootstrap.css") } rel="stylesheet"/>
 		</head>
 		<body class="d-flex flex-column min-vh-100" data-signals="{shortcutsOpen: false}">
+			<datastar-inspector></datastar-inspector>
 			<header class="d-flex justify-content-end gap-2 p-2">
 				<button
 					type="button"
@@ -60,7 +61,8 @@ templ Layout(title, version string) {
 			{ children... }
 			<footer class="mt-auto py-2 bg-body-tertiary text-center text-secondary">Commit: { version }</footer>
 		</body>
-		<!-- Datastar Inspector-->
+		<!-- Datastar Inspector: This requires a separate license, I have it .gitignored so will 404 in the console, just delete this line if you don't have it -->
+		<!-- If you do you need to place it into this path -->
 		<script type="module" src={ StaticPath("js/datastar-inspector.js") }></script>
 		<!-- Datastar v1.0.3 -->
 		<script type="module" src={ StaticPath("js/datastar.js") }></script>

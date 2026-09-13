@@ -27,7 +27,7 @@ tasks:
     deps: [templ:build, sqlc]
     cmds:
       - mkdir -p ./release
-      - go build -ldflags "-X datastar-template/web.Version=$(git describe --tags --always)" -o ./release/web ./cmd
+      - go build -ldflags "-X datastar-template/web.Version=$(git describe --tags --always)" -o ./release/app ./cmd/app
       - echo "Release built in ./release/"
 
   clean:
