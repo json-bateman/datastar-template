@@ -7,7 +7,7 @@ templ Layout(title, version string) {
 		data-attr:data-bs-theme="$theme"
 		data-effect="localStorage.setItem('theme', $theme)"
 		data-on:keydown__window="hotkey(evt, 't') && ($theme = $theme === 'dark' ? 'light' : 'dark'); hotkey(evt, '?') && ($shortcutsOpen = !$shortcutsOpen)"
-		data-syntax-theme="gruvbox"
+		data-syntax-theme="bootstrap"
 		lang="en"
 	>
 		<head>
@@ -31,7 +31,7 @@ templ Layout(title, version string) {
 			<link href={ StaticPath("css/fonts.css") } rel="stylesheet"/>
 			<link href={ StaticPath("css/bootstrap.min.css") } rel="stylesheet"/>
 			<link href={ StaticPath("css/app.css") } rel="stylesheet"/>
-			<link href={ StaticPath("css/microlighter-gruvbox.css") } rel="stylesheet"/>
+			<link href={ StaticPath("css/microlighter-bootstrap.css") } rel="stylesheet"/>
 		</head>
 		<body class="d-flex flex-column min-vh-100" data-signals="{shortcutsOpen: false}">
 			<header class="d-flex justify-content-end gap-2 p-2">
@@ -57,7 +57,7 @@ templ Layout(title, version string) {
 			</header>
 			@ShortcutsDialog()
 			{ children... }
-			<footer class="mt-auto py-2 bg-body-tertiary text-center">{ version }</footer>
+			<footer class="mt-auto py-2 bg-body-tertiary text-center text-secondary">Commit: { version }</footer>
 		</body>
 		<!-- Datastar Inspector-->
 		<script type="module" src={ StaticPath("js/datastar-inspector.js") }></script>

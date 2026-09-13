@@ -1,10 +1,42 @@
 package web
 
+const ssePrintMessageSource = `func ssePrintMessage(w http.ResponseWriter, r *http.Request) {
+	sse := datastar.NewSSE(w, r, datastar.WithCompression(datastar.WithBrotli()))
+
+	ticker := time.NewTicker(time.Millisecond * 300)
+	defer ticker.Stop()
+
+	s := "Aloha Travelers"
+	t := 0
+
+	for {
+		if err := sse.PatchElementTempl(Home(s[:t])); err != nil {
+			return
+		}
+
+		select {
+		case <-r.Context().Done():
+			return
+		case <-ticker.C:
+			if len(s) <= t {
+				return
+			}
+			t++
+		}
+	}
+}`
+
 templ Home(text string) {
 	@Layout("Home", Version) {
-		<main id="morphTarget" data-init="@get('/sse/aloha')">
+		<main data-init="@get('/sse/print')">
 			<h1>Hypermedia Gang Rise Up</h1>
-			<div>{ text }</div>
+			<h3>{ text }</h3>
+			<pre><code class="language-go">{ ssePrintMessageSource }</code></pre>
+			<div class="text-sm">*{ "<pre><code> " } blocks are styled with the microlighter library, and a custom bootstrap theme</div>
+			<div class="text-sm">
+				**This code fat morphs the whole page <strong>Home</strong>, check the network tab, brotli compression 
+				is showing that even though we're sending the entire page down on each new character, it's hardly transferring anymore bytes
+			</div>
 		</main>
 	}
 }

@@ -2,6 +2,17 @@
     --bs-body-font-family: "IBM Plex Mono", var(--bs-font-monospace);
 }
 
+/* Ties microlighter's light-dark() colors to our own theme toggle instead of
+   just the OS preference; html[data-bs-theme] beats the syntax theme's plain
+   attribute selector on specificity, so this wins the cascade. */
+html[data-bs-theme="light"] {
+    color-scheme: light;
+}
+
+html[data-bs-theme="dark"] {
+    color-scheme: dark;
+}
+
 #shortcuts-overlay.d-block {
     background: oklch(0% 0 0 / 0.5);
 }

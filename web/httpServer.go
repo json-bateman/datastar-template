@@ -49,7 +49,7 @@ func getVersion() string {
 // withDefaultCache sets a long-lived Cache-Control header before the wrapped
 // handler runs. hashfs's FileServer overwrites this with its own header for
 // content-hashed requests, so this only takes effect for plain-named static
-// assets that bypass hashing.
+// assets that ignore hashfs hashing.
 func withDefaultCache(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
@@ -65,7 +65,7 @@ func setupRoutes() chi.Router {
 	r.Handle("/static/*", withDefaultCache(hashfs.FileServer(StaticSys)))
 
 	r.Get("/", home)
-	r.Get("/sse/aloha", sseAloha)
+	r.Get("/sse/print", ssePrintMessage)
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
@@ -83,13 +83,13 @@ func home(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func sseAloha(w http.ResponseWriter, r *http.Request) {
+func ssePrintMessage(w http.ResponseWriter, r *http.Request) {
 	sse := datastar.NewSSE(w, r, datastar.WithCompression(datastar.WithBrotli()))
 
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(time.Millisecond * 300)
 	defer ticker.Stop()
 
-	s := "Aloha Traveler"
+	s := "Aloha Travelers"
 	t := 0
 
 	for {
