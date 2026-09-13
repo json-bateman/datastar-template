@@ -6,7 +6,7 @@ templ Layout(title, version string) {
 		data-signals="{theme: localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')}"
 		data-attr:data-bs-theme="$theme"
 		data-effect="localStorage.setItem('theme', $theme)"
-		data-on:keydown__window="hotkey(evt, 't') && ($theme = $theme === 'dark' ? 'light' : 'dark')"
+		data-on:keydown__window="hotkey(evt, 't') && ($theme = $theme === 'dark' ? 'light' : 'dark'); hotkey(evt, '?') && ($shortcutsOpen = !$shortcutsOpen)"
 		data-syntax-theme="gruvbox"
 		lang="en"
 	>
@@ -33,8 +33,31 @@ templ Layout(title, version string) {
 			<link href={ StaticPath("css/app.css") } rel="stylesheet"/>
 			<link href={ StaticPath("css/microlighter-gruvbox.css") } rel="stylesheet"/>
 		</head>
-		<body>
+		<body class="d-flex flex-column min-vh-100" data-signals="{shortcutsOpen: false}">
+			<header class="d-flex justify-content-end gap-2 p-2">
+				<button
+					type="button"
+					class="btn btn-outline-secondary btn-sm"
+					data-on:click="$theme = $theme === 'dark' ? 'light' : 'dark'"
+					data-attr:aria-label="$theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
+					title="Toggle theme (t)"
+				>
+					<span data-show="$theme === 'dark'">☀️</span>
+					<span data-show="$theme === 'light'">🌙</span>
+				</button>
+				<button
+					id="shortcuts-toggle"
+					type="button"
+					class="btn btn-outline-secondary btn-sm"
+					aria-label="Keyboard shortcuts"
+					aria-haspopup="dialog"
+					title="Keyboard shortcuts (?)"
+					data-on:click="$shortcutsOpen = true"
+				>?</button>
+			</header>
+			@ShortcutsDialog()
 			{ children... }
+			<footer class="mt-auto py-2 bg-body-tertiary text-center">{ version }</footer>
 		</body>
 		<!-- Datastar Inspector-->
 		<script type="module" src={ StaticPath("js/datastar-inspector.js") }></script>
@@ -43,4 +66,52 @@ templ Layout(title, version string) {
 		<!-- MicroLighter v2.2.0 (auto-runner: highlights pre > code[class^="language-"] on load) -->
 		<script type="module" src={ StaticPath("js/microlighter/microlighter.min.js") }></script>
 	</html>
+}
+
+templ ShortcutsDialog() {
+	<div
+		id="shortcuts-overlay"
+		class="modal d-none"
+		data-class="{'d-block': $shortcutsOpen, 'd-none': !$shortcutsOpen}"
+	>
+		<div
+			id="shortcuts-dialog"
+			class="modal-dialog modal-dialog-centered"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="shortcuts-title"
+			data-on:click__outside="!evt.target.closest('#shortcuts-toggle') && ($shortcutsOpen = false)"
+			data-on:keydown__window="evt.key === 'Escape' && ($shortcutsOpen = false)"
+		>
+			<div class="modal-content">
+				<div class="modal-header">
+					<h3 class="modal-title fs-5" id="shortcuts-title">Keyboard Shortcuts</h3>
+					<button
+						type="button"
+						class="btn-close"
+						aria-label="Close"
+						data-on:click="$shortcutsOpen = false"
+					></button>
+				</div>
+				<div class="modal-body">
+					<table class="table table-borderless mb-0">
+						<tbody>
+							<tr>
+								<td class="w-25"><kbd>t</kbd></td>
+								<td>Toggle light / dark theme</td>
+							</tr>
+							<tr>
+								<td><kbd>?</kbd></td>
+								<td>Open / close this dialog</td>
+							</tr>
+							<tr>
+								<td><kbd>Esc</kbd></td>
+								<td>Close this dialog</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
 }

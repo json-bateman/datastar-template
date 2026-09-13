@@ -93,7 +93,7 @@ func sseAloha(w http.ResponseWriter, r *http.Request) {
 	t := 0
 
 	for {
-		if err := sse.PatchElementTempl(HomeBody(s[:t])); err != nil {
+		if err := sse.PatchElementTempl(Home(s[:t])); err != nil {
 			return
 		}
 

@@ -1,3 +1,7 @@
 :root {
     --bs-body-font-family: "IBM Plex Mono", var(--bs-font-monospace);
 }
+
+#shortcuts-overlay.d-block {
+    background: oklch(0% 0 0 / 0.5);
+}
