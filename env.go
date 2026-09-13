@@ -9,7 +9,8 @@ import (
 )
 
 type Config struct {
-	Port int `envconfig:"PORT" default:"59876"`
+	Port   int    `envconfig:"PORT" default:"59876"`
+	DBPath string `envconfig:"DB_PATH" default:"./data/app.db"`
 }
 
 var Env Config

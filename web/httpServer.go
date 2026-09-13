@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"database/sql"
 	"embed"
 	"fmt"
 	"log"
@@ -12,6 +13,8 @@ import (
 	"time"
 
 	"datastar-template"
+
+	"datastar-template/sql/sqlcgen"
 
 	"github.com/benbjohnson/hashfs"
 	"github.com/go-chi/chi/middleware"
@@ -57,15 +60,15 @@ func withDefaultCache(next http.Handler) http.Handler {
 	})
 }
 
-func setupRoutes() chi.Router {
+func setupRoutes(db *sql.DB) chi.Router {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
 	r.Handle("/static/*", withDefaultCache(hashfs.FileServer(StaticSys)))
 
-	r.Get("/", home)
-	r.Get("/sse/aloha", sseAloha)
+	r.Get("/", home(db))
+	r.Get("/sse/print", ssePrintMessage(db))
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
@@ -77,45 +80,62 @@ func setupRoutes() chi.Router {
 	return r
 }
 
-func home(w http.ResponseWriter, r *http.Request) {
-	if err := Home("").Render(r.Context(), w); err != nil {
-		slog.Debug("render error", "component", "NotFound", "err", err)
-	}
-}
-
-func sseAloha(w http.ResponseWriter, r *http.Request) {
-	sse := datastar.NewSSE(w, r, datastar.WithCompression(datastar.WithBrotli()))
-
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
-
-	s := "Aloha Traveler"
-	t := 0
-
-	for {
-		if err := sse.PatchElementTempl(Home(s[:t])); err != nil {
+func home(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		users, err := sqlcgen.New(db).GetAllUsers(r.Context())
+		if err != nil {
+			slog.Error("query error", "component", "GetAllUsers", "err", err)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		select {
-		case <-r.Context().Done():
+		if err := Home(users, "").Render(r.Context(), w); err != nil {
+			slog.Debug("render error", "component", "Home", "err", err)
+		}
+	}
+}
+
+func ssePrintMessage(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		sse := datastar.NewSSE(w, r, datastar.WithCompression(datastar.WithBrotli()))
+
+		users, err := sqlcgen.New(db).GetAllUsers(r.Context())
+		if err != nil {
+			slog.Error("query error", "component", "GetAllUsers", "err", err)
 			return
-		case <-ticker.C:
-			if len(s) <= t {
+		}
+
+		ticker := time.NewTicker(time.Millisecond * 300)
+		defer ticker.Stop()
+
+		s := "Now with Nats and SQLite"
+		t := 0
+
+		for {
+			if err := sse.PatchElementTempl(Home(users, s[:t])); err != nil {
 				return
 			}
-			t++
+
+			select {
+			case <-r.Context().Done():
+				return
+			case <-ticker.C:
+				if len(s) <= t {
+					return
+				}
+				t++
+			}
 		}
 	}
 }
 
 // RunBlocking starts the HTTP server and blocks until setupCtx is cancelled, at
 // which point it shuts down gracefully.
-func RunBlocking(setupCtx context.Context) error {
+func RunBlocking(setupCtx context.Context, db *sql.DB) error {
 	if Version == "dev" {
 		Version = getVersion()
 	}
-	router := setupRoutes()
+	router := setupRoutes(db)
 
 	addr := fmt.Sprintf(":%d", dtemplate.Env.Port)
 	srv := http.Server{

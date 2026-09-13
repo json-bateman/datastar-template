@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"datastar-template"
+	"datastar-template/sql"
 	"datastar-template/web"
 )
 
@@ -17,8 +18,6 @@ func main() {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})))
-
-	// CTRL+C sends SIGINT; `kill` and service stop send SIGTERM. Both trigger a graceful shutdown.
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
@@ -28,9 +27,15 @@ func main() {
 }
 
 func run(ctx context.Context) error {
-	dtemplate.LoadSettings()
+	cfg := dtemplate.LoadSettings()
 
-	if err := web.RunBlocking(ctx); err != nil {
+	db, err := sql.NewDatabase(ctx, cfg.DBPath)
+	if err != nil {
+		return fmt.Errorf("initialize db: %w", err)
+	}
+	defer db.Close()
+
+	if err := web.RunBlocking(ctx, db); err != nil {
 		return fmt.Errorf("run web server: %w", err)
 	}
 	return nil

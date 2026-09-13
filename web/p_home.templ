@@ -1,10 +1,38 @@
 package web
 
-templ Home(text string) {
+import (
+	"strconv"
+	"time"
+
+	"datastar-template/sql/sqlcgen"
+)
+
+type Users = []sqlcgen.User
+
+templ Home(users Users, text string) {
 	@Layout("Home", Version) {
-		<main id="morphTarget" data-init="@get('/sse/aloha')">
+		<main id="morphTarget" data-init="@get('/sse/print')">
 			<h1>Hypermedia Gang Rise Up</h1>
-			<div>{ text }</div>
+			<h3>{ text }</h3>
+			<h5>User Table</h5>
+			<table class="table">
+				<thead>
+					<tr>
+						<th>ID</th>
+						<th>Username</th>
+						<th>Created At</th>
+					</tr>
+				</thead>
+				<tbody>
+					for _, user := range users {
+						<tr>
+							<td>{ strconv.FormatInt(user.ID, 10) }</td>
+							<td>{ user.Username }</td>
+							<td>{ time.Unix(user.CreatedAt, 0).Format(time.DateTime) }</td>
+						</tr>
+					}
+				</tbody>
+			</table>
 		</main>
 	}
 }

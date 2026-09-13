@@ -6,7 +6,17 @@ tasks:
     cmds:
       - go get -tool github.com/air-verse/air
       - go get -tool github.com/a-h/templ/cmd/templ
+      - go get -tool github.com/sqlc-dev/sqlc/cmd/sqlc
       - go mod tidy
+
+  sqlc:
+    cmds:
+      - go tool sqlc generate
+    sources:
+      - sql/queries/*.sql
+      - sqlc.yaml
+    generates:
+      - sql/sqlcgen/*.go
 
   templ:build:
     desc: Generate templ files
@@ -14,7 +24,7 @@ tasks:
 
   go:build:
     desc: Build the web server for production
-    deps: [templ:build]
+    deps: [templ:build, sqlc]
     cmds:
       - mkdir -p ./release
       - go build -ldflags "-X datastar-template/web.Version=$(git describe --tags --always)" -o ./release/web ./cmd
@@ -29,5 +39,6 @@ tasks:
 
   default:
     desc: Run and watch with air
+    deps: [sqlc]
     cmds:
       - go tool air

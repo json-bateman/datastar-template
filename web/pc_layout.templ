@@ -57,7 +57,7 @@ templ Layout(title, version string) {
 			</header>
 			@ShortcutsDialog()
 			{ children... }
-			<footer class="mt-auto py-2 bg-body-tertiary text-center">{ version }</footer>
+			<footer class="mt-auto py-2 bg-body-tertiary text-center text-secondary">Commit: { version }</footer>
 		</body>
 		<!-- Datastar Inspector-->
 		<script type="module" src={ StaticPath("js/datastar-inspector.js") }></script>
